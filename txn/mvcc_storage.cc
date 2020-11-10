@@ -90,8 +90,8 @@ bool MVCCStorage::CheckWrite(Key key, int txn_unique_id) {
       return true;
     }
   }
-  // if key not found
-  return false;
+  // if key not found then all writes are valid
+  return true;
 }
 
 // MVCC Write, call this method only if CheckWrite return true.
@@ -111,6 +111,8 @@ void MVCCStorage::Write(Key key, Value value, int txn_unique_id) {
     GetLargestWriteTimestamp(key, &version, txn_unique_id);
     if (txn_unique_id == version.version_id_) {
       version.value_ = value;
+    } else if (txn_unique_id == version.max_read_id_) {
+      return;
     } else {
       Version *v = new Version;
       v->value_ = value;

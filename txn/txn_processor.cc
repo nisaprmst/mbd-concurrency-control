@@ -403,6 +403,8 @@ void TxnProcessor::MVCCExecuteTxn(Txn* txn) {
   if (passed) {
     ApplyWrites(txn);
     MVCCUnlockWriteKeys(txn);
+    txn->status_ = COMMITTED;
+    txn_results_.Push(txn);
   } else { // at least one key failed the check
     MVCCUnlockWriteKeys(txn);
 
