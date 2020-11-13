@@ -337,16 +337,6 @@ void TxnProcessor::RunOCCScheduler() {
 // }
 
 void TxnProcessor::RunMVCCScheduler() {
-  // CPSC 438/538:
-  //
-  // Implement this method!
-
-  // Note that you may need to create another execute method, like TxnProcessor::MVCCExecuteTxn.
-  //
-  // [For now, run serial scheduler in order to make it through the test
-  // suite]
-
-  // Hint:Pop a txn from txn_requests_, and pass it to a thread to execute.
   while (tp_.Active()) {
     Txn *txn;
     // pop transaction
@@ -359,7 +349,6 @@ void TxnProcessor::RunMVCCScheduler() {
                   txn));
     }
   }
-  // RunSerialScheduler();
 }
 
 void TxnProcessor::MVCCExecuteTxn(Txn* txn) {

@@ -41,10 +41,6 @@ void MVCCStorage::Unlock(Key key) {
 
 // MVCC Read
 bool MVCCStorage::Read(Key key, Value* result, int txn_unique_id) {
-  // CPSC 438/538:
-  //
-  // Implement this method!
-  
   if (mvcc_data_.count(key)) {
 
     // Hint: Iterate the version_lists and return the verion whose write timestamp
@@ -67,17 +63,6 @@ bool MVCCStorage::Read(Key key, Value* result, int txn_unique_id) {
 
 // Check whether apply or abort the write
 bool MVCCStorage::CheckWrite(Key key, int txn_unique_id) {
-  // CPSC 438/538:
-  //
-  // Implement this method!
-  
-  // Hint: Before all writes are applied, we need to make sure that each write
-  // can be safely applied based on MVCC timestamp ordering protocol. This method
-  // only checks one key, so you should call this method for each key in the
-  // write_set. Return true if this key passes the check, return false if not. 
-  // Note that you don't have to call Lock(key) in this method, just
-  // call Lock(key) before you call this method and call Unlock(key) afterward.
-
   if (mvcc_data_.count(key)) {
     // get largest write timestamp version
     Version version;
@@ -96,15 +81,6 @@ bool MVCCStorage::CheckWrite(Key key, int txn_unique_id) {
 
 // MVCC Write, call this method only if CheckWrite return true.
 void MVCCStorage::Write(Key key, Value value, int txn_unique_id) {
-  // CPSC 438/538:
-  //
-  // Implement this method!
-  
-  // Hint: Insert a new version (malloc a Version and specify its value/version_id/max_read_id)
-  // into the version_lists. Note that InitStorage() also calls this method to init storage. 
-  // Note that you don't have to call Lock(key) in this method, just
-  // call Lock(key) before you call this method and call Unlock(key) afterward.
-  
   if (mvcc_data_.count(key)) {
     // get largest write timestamp version
     Version version;
@@ -114,6 +90,7 @@ void MVCCStorage::Write(Key key, Value value, int txn_unique_id) {
     } else if (txn_unique_id == version.max_read_id_) {
       return;
     } else {
+      // create new version
       Version *v = new Version;
       v->value_ = value;
       v->max_read_id_ = txn_unique_id;
