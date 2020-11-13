@@ -279,47 +279,66 @@ bool TxnProcessor::OCCValidateTransaction(const Txn &txn) const {
   return true;
 }
 
-void TxnProcessor::RunOCCScheduler() {
-  // Fetch transaction requests, and immediately begin executing them.
-  while (tp_.Active()) {
-    Txn *txn;
-    if (txn_requests_.Pop(&txn)) {
+void TxnProcessor::RunOCCScheduler(){
+  //
+  // Implement this method!
+  // [For now, run serial scheduler in order to make it through the test
+  // suite]
 
-      // Start txn running in its own thread.
+  while (tp_.Active()){
+    // Get the next new transaction request (if one is pending) and pass it to an execution thread.
+    Txn *txn;
+    if (txn_requests_.Pop(&txn)){
       tp_.RunTask(new Method<TxnProcessor, void, Txn*>(
                   this,
                   &TxnProcessor::ExecuteTxn,
                   txn));
+      // What's done in RunTask:
+      //   Record start time
+      //   Perform "read phase" of transaction:
+      //      Read all relevant data from storage
+      //      Execute the transaction logic (Run())
     }
+    
+    Txn *txn_b; //transaction that has finished running
+    while (completed_txns_.Pop(&txn_b)){
+      // Deal with all transactions that have finished running.
+      if (txn_b->Status() == COMPLETED_C){
+        //If the transaction can be completed by commit from ExecuteTxn
+        //Enter validation phase using OCCValidateTransaction
+        if (OCCValidateTransaction(*txn_b)){
+          //If the record was last updated before this txn_b starts
+          //txn_b valid
+          //apply all writes
+          ApplyWrites(txn_b);
+          //mark transaction as commited
+          txn_b->status_ = COMMITTED;
+        } else {
+          //validation fails
+          //Cleanup txn
+          txn_b->reads_.empty();
+          txn_b->writes_.empty();
+          txn_b->status_ = INCOMPLETE;
 
-    // Validate completed transactions, serially
-    Txn *finished;
-    while (completed_txns_.Pop(&finished)) {
-      if (finished->Status() == COMPLETED_A) {
-        finished->status_ = ABORTED;
-      } else {
-        bool valid = OCCValidateTransaction(*finished);
-        if (!valid) {
-          // Cleanup and restart
-          finished->reads_.empty();
-          finished->writes_.empty();
-          finished->status_ = INCOMPLETE;
-
+          //Restart txn
           mutex_.Lock();
           txn->unique_id_ = next_unique_id_;
           next_unique_id_++;
-          txn_requests_.Push(finished);
+          txn_requests_.Push(txn_b);
           mutex_.Unlock();
-        } else {
-          // Commit the transaction
-          ApplyWrites(finished);
-          txn->status_ = COMMITTED;
         }
+        
+      } else {
+        // txn_b->Status() == COMPLETED_A
+        //If the transaction can be completed by abort form ExecuteTxn
+        //Change its status to ABORTED
+        txn_b->status_ = ABORTED;
       }
-
-      txn_results_.Push(finished);
+      // Put the transaction result, be it ABORTED, INCOMPLETE, or COMMITED
+      txn_results_.Push(txn_b);
     }
   }
+
 }
 
 // void TxnProcessor::RunOCCParallelScheduler() {
