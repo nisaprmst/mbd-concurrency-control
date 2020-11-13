@@ -313,6 +313,8 @@ void TxnProcessor::RunOCCScheduler(){
           ApplyWrites(txn_b);
           //mark transaction as commited
           txn_b->status_ = COMMITTED;
+          //Return the COMMITTED transaction result
+          txn_results_.Push(txn_b);
         } else {
           //validation fails
           //Cleanup txn
@@ -333,9 +335,9 @@ void TxnProcessor::RunOCCScheduler(){
         //If the transaction can be completed by abort form ExecuteTxn
         //Change its status to ABORTED
         txn_b->status_ = ABORTED;
+        //Return the ABORTED transaction result
+        txn_results_.Push(txn_b);
       }
-      // Put the transaction result, be it ABORTED, INCOMPLETE, or COMMITED
-      txn_results_.Push(txn_b);
     }
   }
 
