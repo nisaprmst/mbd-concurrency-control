@@ -17,7 +17,7 @@ TxnProcessor::TxnProcessor(CCMode mode)
   if (mode_ == LOCKING_EXCLUSIVE_ONLY)
     lm_ = new LockManagerA(&ready_txns_);
   // else if (mode_ == LOCKING)
-    // lm_ = new LockManagerB(&ready_txns_);
+  //   lm_ = new LockManagerB(&ready_txns_);
 
   // Create the storage
   if (mode_ == MVCC) {
