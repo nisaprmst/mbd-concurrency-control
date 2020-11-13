@@ -380,7 +380,7 @@ void TxnProcessor::MVCCExecuteTxn(Txn* txn) {
     Value res;
     // lock the storage
     storage_->Lock(*it);
-    bool keyExist = storage_->Read(*it, &res);
+    bool keyExist = storage_->Read(*it, &res, txn->unique_id_);
     // if true, add to read value
     if (keyExist) {
       txn->reads_[*it] = res;
@@ -394,7 +394,7 @@ void TxnProcessor::MVCCExecuteTxn(Txn* txn) {
     Value res;
     // lock the storage
     storage_->Lock(*it);
-    bool keyExist = storage_->Read(*it, &res);
+    bool keyExist = storage_->Read(*it, &res, txn->unique_id_);
     if (keyExist) {
       txn->reads_[*it] = res;
     }
